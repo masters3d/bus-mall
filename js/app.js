@@ -64,10 +64,15 @@ PhotoSet.prototype.containsDuplicate = function () {
   return false;
 };
 
+PhotoSet.newSet = function() {
+  var somePhotos = photos.pickThreeNonRepeating();
+  return new PhotoSet(somePhotos, somePhotos);
+};
+
 PhotoSet.prototype.createNewRandomSet = function(){
-  var proposedSet = new PhotoSet(this.current, this.current);
+  var proposedSet = new PhotoSet(photos.pickThreeNonRepeating(), this.current);
   while(proposedSet.containsDuplicate()) {
-    proposedSet = new PhotoSet(photos.pickThreeNonRepeating, this.current);
+    proposedSet = new PhotoSet(photos.pickThreeNonRepeating(), this.current);
     console.log(proposedSet);
   }
   return proposedSet;
@@ -142,35 +147,22 @@ photos.setupPhotoObjects = function (){
   }
 };
 
-function gameRunner(runsToDisplay){
-  var setsToDisplay = runsToDisplay ? runsToDisplay : 25;
-  photos.setupPhotoObjects();
-  while(setsToDisplay < setsToDisplay) {
-
-
-
-
-    setsToDisplay += 1;
-  }
-  // End of runs to display
-}
 
 //****************
 /// START OF GAME
 //****************
 
-gameRunner(7);
-
-console.log(photos);
-console.log(photos);
-var somePhotos = photos.pickThreeNonRepeating();
-console.log(somePhotos);
-console.log(photos.pickThreeNonRepeating());
-var mySetOfPhotos = new PhotoSet(somePhotos, somePhotos);
-console.log(mySetOfPhotos.createNewRandomSet());
-
+var setsToDisplay =  25;
+var currentClicks = 0;
+photos.setupPhotoObjects();
+var photoSetToDisplay = PhotoSet.newSet();
 var selectionWindow = document.getElementById('selectionWindow');
-selectionWindow.appendChild(mySetOfPhotos.creatingImageNodes());
+console.log('SOmething ' + photoSetToDisplay);
+photoSetToDisplay = photoSetToDisplay.createNewRandomSet();
+selectionWindow.appendChild(photoSetToDisplay.creatingImageNodes());
+
+
+
 
 
 
