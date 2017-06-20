@@ -13,12 +13,16 @@ function Photo(fileName, fileType) {
   this.likes = 0;
 }
 
+Photo.prototype.statsAsString = function() {
+  var toRetun =  this.fileName + ':   ' + 'clicks: ' + this.likes + ' , ' + 'views: ' + this.views;
+  return toRetun;
+};
+
 Photo.prototype.filePath = function() {
   return 'img/' + this.fileName + '.' + this.fileType;
 };
 
 Photo.prototype.isEqual = function (obj) {
-  console.log('Comparing : ' + this + 'to ' + obj);
   if (this === obj) { return true; };
   return this.filePath() == obj.filePath();
 };
@@ -53,12 +57,9 @@ PhotoSet.prototype.containsDuplicate = function () {
   }
 
   for(var each1 in this.current) {
-    console.log(this.current[each1]);
     if (contains(this.previous, this.current[each1])) { return true; }
   }
-  console.log(this.previous);
   for(var each2 in this.previous) {
-    console.log(this.previous[each2]);
     if (contains(this.current, this.previous[each2])) { return true; }
   }
   return false;
@@ -73,7 +74,6 @@ PhotoSet.prototype.createNewRandomSet = function(){
   var proposedSet = new PhotoSet(photos.pickThreeNonRepeating(), this.current);
   while(proposedSet.containsDuplicate()) {
     proposedSet = new PhotoSet(photos.pickThreeNonRepeating(), this.current);
-    console.log(proposedSet);
   }
   return proposedSet;
 };
@@ -157,13 +157,23 @@ photos.setupPhotoObjects = function (){
   }
 };
 
+function creatingStatisticElements() {
+  var nodeElement = document.createElement('ul');
+  for(var eee = 0; eee < photos.length; eee++ ) {
+    var element = photos[eee];
+    var li = document.createElement('li');
+    li.textContent = element.statsAsString();
+    nodeElement.appendChild(li);
+  }
+  return nodeElement;
+};
 
 
 //****************
 /// START OF GAME
 //****************
 
-var roundsToDisplay =  5;
+var roundsToDisplay =  25;
 var currentClicks = 0;
 photos.setupPhotoObjects();
 var photoSetToDisplay = PhotoSet.newSet();
@@ -175,31 +185,22 @@ selectionWindow.displayNewSetOfImages = function(){
   selectionWindow.appendChild(photoSetToDisplay.creatingImageNodes());
 };
 
-
 function myClickHandler (event) {
   if (event.target.parentNode.className === 'imageSet') {
     var element = photos.getElementWithName(event.target.getAttribute('id'));
     element.likes += 1;
     currentClicks += 1;
-    console.log(element);
     selectionWindow.displayNewSetOfImages();
+    console.log(currentClicks);
 
     if (currentClicks === roundsToDisplay) {
       console.log('Game is done. Thanks for playing');
+      selectionWindow.appendChild(creatingStatisticElements());
+      console.table(photos);
       selectionWindow.removeEventListener('click', myClickHandler);
     }
   }
 };
 
 selectionWindow.addEventListener('click', myClickHandler);
-
-
 selectionWindow.displayNewSetOfImages();
-
-
-
-
-
-
-
-//End
