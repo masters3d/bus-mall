@@ -2,6 +2,7 @@
 
 console.log('hello world!');
 
+var photos = [];
 function Photo(fileName, fileType) {
   if (!fileName || fileName === fileType || parseInt(fileName) === NaN ) {
     throw fileName + ' or ' + fileType + ' is invalid for the constructor';
@@ -13,10 +14,12 @@ function Photo(fileName, fileType) {
 }
 
 Photo.prototype.filePath = function() {
-  return 'img/' + this.fileName + this.fileType;
+  return 'img/' + this.fileName + '.' + this.fileType;
 };
 
 Photo.prototype.isEqual = function (obj) {
+  console.log('Comparing : ' + this + 'to ' + obj);
+  if (this === obj) { return true; };
   return this.filePath() == obj.filePath();
 };
 
@@ -33,30 +36,51 @@ function PhotoSet(currentSet, previousSet) {
 }
 
 PhotoSet.prototype.containsDuplicate = function () {
+
+  if (!this.current || !this.previous) {
+    throw 'Current or previous are no defined or they are null';
+  }
+  console.log('%$$$$$$$$');
+  console.log(this.current);
+  console.log(this.previous);
+
   for(var each1 in this.current) {
+    console.log(this.current[each1]);
     if (contains(this.previous, this.current[each1])) { return true; }
   }
+  console.log(this.previous);
   for(var each2 in this.previous) {
+    console.log(this.previous[each2]);
     if (contains(this.current, this.previous[each2])) { return true; }
   }
   return false;
 };
 
-
-var photos = [];
+PhotoSet.prototype.createNewRandomSet = function(){
+  var proposedSet = new PhotoSet(this.current, this.current);
+  while(proposedSet.containsDuplicate()) {
+    proposedSet = new PhotoSet(photos.pickThreeNonRepeating, this.current);
+    console.log(proposedSet);
+  }
+  return proposedSet;
+};
 
 function contains(array, obj) {
+
   for (var eaIndex in array ) {
-    if (this[eaIndex].isEqual() === obj.isEqual()) {
+    if (obj['isEqual'] === undefined || array[eaIndex]['isEqual'] === undefined ) { // eslint-disable-line
+      throw 'Contains expects objects to implement isEqual() method';
+    }
+    if (obj.isEqual(array[eaIndex])) {
       return true;
     }
   }
   return false;
 };
 
-
 photos.pickThreeNonRepeating = function () {
   var photosToPick = 3;
+  var chosenPhotos = [];
   var indexes = [];
   while (indexes.length < photosToPick) {
     var randomNumber = Math.floor(Math.random() * this.length);
@@ -64,7 +88,10 @@ photos.pickThreeNonRepeating = function () {
       indexes.push(randomNumber);
     }
   }
-  return indexes;
+  for (var eap in indexes) {
+    chosenPhotos.push(photos[indexes[eap]]);
+  }
+  return chosenPhotos;
 };
 
 // See if the object is in the photos array
@@ -73,7 +100,7 @@ photos.containsPhoto = function(photo) {
 };
 
 // Resets all the photos to the ones on file
-photos.setPhotoObjects = function (){
+photos.setupPhotoObjects = function (){
 
   // resets the array contents with out removing prototype methods
   photos.splice(0,photos.length); // assigning a new array removes all added methods
@@ -127,9 +154,17 @@ function gameRunner(runsToDisplay){
 gameRunner(7);
 
 console.log(photos);
-photos.setPhotoObjects();
+photos.setupPhotoObjects();
 console.log(photos);
+var somePhotos = photos.pickThreeNonRepeating();
+console.log(somePhotos);
 console.log(photos.pickThreeNonRepeating());
+
+var mySetOfPhotos = new PhotoSet(somePhotos, somePhotos);
+console.log(mySetOfPhotos.containsDuplicate());
+console.log(mySetOfPhotos.createNewRandomSet());
+console.log(mySetOfPhotos.createNewRandomSet());
+console.log(mySetOfPhotos.createNewRandomSet());
 
 
 
