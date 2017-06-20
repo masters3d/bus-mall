@@ -1,4 +1,12 @@
 * {
-  /*border: 3px solid black;*/
   font-family: 'Helvetica', sans-serif;
+}
+
+.imageSet img {
+  max-width: 250px;
+  max-height: 200px;
+}
+
+.imageSet {
+border-style: dotted;
 }
