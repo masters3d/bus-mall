@@ -158,6 +158,7 @@ photos.setupPhotoObjects = function (){
 };
 
 
+
 //****************
 /// START OF GAME
 //****************
@@ -166,20 +167,24 @@ var setsToDisplay =  25;
 var currentClicks = 0;
 photos.setupPhotoObjects();
 var photoSetToDisplay = PhotoSet.newSet();
-var selectionWindow = document.getElementById('selectionWindow');
-console.log('SOmething ' + photoSetToDisplay);
-photoSetToDisplay = photoSetToDisplay.createNewRandomSet();
-selectionWindow.appendChild(photoSetToDisplay.creatingImageNodes());
 
+var selectionWindow = document.getElementById('selectionWindow');
+selectionWindow.displayNewSetOfImages = function(){
+  selectionWindow.textContent = '';
+  photoSetToDisplay = photoSetToDisplay.createNewRandomSet();
+  selectionWindow.appendChild(photoSetToDisplay.creatingImageNodes());
+};
 
 selectionWindow.addEventListener('click', function (event) {
-  // var answer = event.target.getAttribute('id');
   if (event.target.parentNode.className === 'imageSet') {
     var element = photos.getElementWithName(event.target.getAttribute('id'));
     element.likes += 1;
     console.log(element);
+    selectionWindow.displayNewSetOfImages();
   }
 });
+
+selectionWindow.displayNewSetOfImages();
 
 
 

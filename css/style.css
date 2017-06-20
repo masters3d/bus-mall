@@ -2,7 +2,11 @@
   font-family: 'Helvetica', sans-serif;
 }
 
-img {
+.imageSet img {
   max-width: 250px;
   max-height: 200px;
+}
+
+.imageSet {
+border-style: dotted;
 }
