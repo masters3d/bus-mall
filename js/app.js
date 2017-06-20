@@ -23,10 +23,12 @@ Photo.prototype.isEqual = function (obj) {
   return this.filePath() == obj.filePath();
 };
 
+// Everyt time we create a node we update the view count
 Photo.prototype.creatingImageNode = function () {
   var nodeElement = document.createElement('img');
   nodeElement.setAttribute('src', this.filePath());
   nodeElement.setAttribute('id', this.fileName);
+  this.views += 1;
   return nodeElement;
 };
 
@@ -39,7 +41,8 @@ PhotoSet.prototype.creatingImageNodes = function () {
   var nodeElement = document.createElement('div');
   nodeElement.setAttribute('class', 'imageSet');
   for (var eai in this.current) {
-    nodeElement.appendChild(this.current[eai]['creatingImageNode']());
+    var element = this.current[eai];
+    nodeElement.appendChild(element['creatingImageNode']());
   }
   return nodeElement;
 };
@@ -48,9 +51,6 @@ PhotoSet.prototype.containsDuplicate = function () {
   if (!this.current || !this.previous) {
     throw 'Current or previous are no defined or they are null';
   }
-  console.log('%$$$$$$$$');
-  console.log(this.current);
-  console.log(this.previous);
 
   for(var each1 in this.current) {
     console.log(this.current[each1]);
@@ -107,7 +107,7 @@ photos.pickThreeNonRepeating = function () {
   var indexes = [];
   while (indexes.length < photosToPick) {
     var randomNumber = Math.floor(Math.random() * this.length);
-    if(indexes.indexOf(randomNumber) === -1) {
+    if(!indexes.includes(randomNumber)) {
       indexes.push(randomNumber);
     }
   }
@@ -163,7 +163,7 @@ photos.setupPhotoObjects = function (){
 /// START OF GAME
 //****************
 
-var setsToDisplay =  25;
+var roundsToDisplay =  5;
 var currentClicks = 0;
 photos.setupPhotoObjects();
 var photoSetToDisplay = PhotoSet.newSet();
@@ -175,14 +175,24 @@ selectionWindow.displayNewSetOfImages = function(){
   selectionWindow.appendChild(photoSetToDisplay.creatingImageNodes());
 };
 
-selectionWindow.addEventListener('click', function (event) {
+
+function myClickHandler (event) {
   if (event.target.parentNode.className === 'imageSet') {
     var element = photos.getElementWithName(event.target.getAttribute('id'));
     element.likes += 1;
+    currentClicks += 1;
     console.log(element);
     selectionWindow.displayNewSetOfImages();
+
+    if (currentClicks === roundsToDisplay) {
+      console.log('Game is done. Thanks for playing');
+      selectionWindow.removeEventListener('click', myClickHandler);
+    }
   }
-});
+};
+
+selectionWindow.addEventListener('click', myClickHandler);
+
 
 selectionWindow.displayNewSetOfImages();
 
