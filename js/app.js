@@ -78,6 +78,7 @@ PhotoSet.prototype.createNewRandomSet = function(){
   return proposedSet;
 };
 
+// Free helper function
 function contains(array, obj) {
 
   for (var eaIndex in array ) {
@@ -89,6 +90,15 @@ function contains(array, obj) {
     }
   }
   return false;
+};
+
+photos.getElementWithName = function(name) {
+  for(var eea in this) {
+    if (this[eea].fileName === name) {
+      return this[eea];
+    }
+  }
+  throw 'The name was not found in the phoros array';
 };
 
 photos.pickThreeNonRepeating = function () {
@@ -161,6 +171,15 @@ console.log('SOmething ' + photoSetToDisplay);
 photoSetToDisplay = photoSetToDisplay.createNewRandomSet();
 selectionWindow.appendChild(photoSetToDisplay.creatingImageNodes());
 
+
+selectionWindow.addEventListener('click', function (event) {
+  // var answer = event.target.getAttribute('id');
+  if (event.target.parentNode.className === 'imageSet') {
+    var element = photos.getElementWithName(event.target.getAttribute('id'));
+    element.likes += 1;
+    console.log(element);
+  }
+});
 
 
 
