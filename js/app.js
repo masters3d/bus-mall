@@ -24,7 +24,7 @@ Photo.prototype.isEqual = function (obj) {
 };
 
 Photo.prototype.creatingImageNode = function () {
-  var nodeElement = docment.creaeElement('image');
+  var nodeElement = document.createElement('img');
   nodeElement.setAttribute('src', this.filePath());
   nodeElement.setAttribute('id', this.fileName);
   return nodeElement;
@@ -35,8 +35,16 @@ function PhotoSet(currentSet, previousSet) {
   this.previous = previousSet ? previousSet : [];
 }
 
-PhotoSet.prototype.containsDuplicate = function () {
+PhotoSet.prototype.creatingImageNodes = function () {
+  var nodeElement = document.createElement('div');
+  nodeElement.setAttribute('class', 'imageSet');
+  for (var eai in this.current) {
+    nodeElement.appendChild(this.current[eai]['creatingImageNode']());
+  }
+  return nodeElement;
+};
 
+PhotoSet.prototype.containsDuplicate = function () {
   if (!this.current || !this.previous) {
     throw 'Current or previous are no defined or they are null';
   }
@@ -136,7 +144,7 @@ photos.setupPhotoObjects = function (){
 
 function gameRunner(runsToDisplay){
   var setsToDisplay = runsToDisplay ? runsToDisplay : 25;
-
+  photos.setupPhotoObjects();
   while(setsToDisplay < setsToDisplay) {
 
 
@@ -154,17 +162,16 @@ function gameRunner(runsToDisplay){
 gameRunner(7);
 
 console.log(photos);
-photos.setupPhotoObjects();
 console.log(photos);
 var somePhotos = photos.pickThreeNonRepeating();
 console.log(somePhotos);
 console.log(photos.pickThreeNonRepeating());
-
 var mySetOfPhotos = new PhotoSet(somePhotos, somePhotos);
-console.log(mySetOfPhotos.containsDuplicate());
 console.log(mySetOfPhotos.createNewRandomSet());
-console.log(mySetOfPhotos.createNewRandomSet());
-console.log(mySetOfPhotos.createNewRandomSet());
+
+var selectionWindow = document.getElementById('selectionWindow');
+selectionWindow.appendChild(mySetOfPhotos.creatingImageNodes());
+
 
 
 
