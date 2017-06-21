@@ -2,33 +2,57 @@
 
 console.log('hello world!');
 
+
 var RatingStorage = {
-  _key: 'rateGamePhotos',
-  _fallBackArray : [],
-  get photos() {
-    if (localStorage) {
-      try {
-        return JSON.parse(localStorage.getObj(this._key));
-      }
-      catch (e) {
-        if (this._fallBackArray.length === 0) {
-          this.photos = [];
-        }
-        return this._fallBackArray;
-      }
-    }
-  },
-  set photos(array) {
-    try {
-      localStorage.setItem(this.key, JSON.stringify(array));
-    }
-    catch (e) {
-      this._fallBackArray = array;
-    }
-  }
+  photos : []
 };
 
-var photos = RatingStorage.photos;
+// function RatingStorage() {
+//   this._key = 'rateGamePhotos';
+//   this._fallBackArray = [];
+// };
+
+
+// Object.defineProperties(RatingStorage, 'photos', {
+//   get: function() {
+//     if (localStorage) {
+//       try {
+//         var toReturn = JSON.parse(localStorage.getItem(this._key));
+//         if (toReturn) {
+//           return toReturn;
+//         }
+//         throw 'JSON parsed came back as Nul';
+//       }
+//       catch (e) {
+//         console.log('Caught an error: ' + e );
+//         // First time it runs set up the initial logic
+//         if (this._fallBackArray.length === 0) {
+//           this.photos = [];
+//           this.setupPhotoObjects();
+//         }
+//         return this._fallBackArray;
+//       }
+//     }
+//   },
+//   set: function(value) { _privateSetPhotos(value); }
+// }
+// );
+
+console.log(RatingStorage);
+console.log(RatingStorage.prototype);
+
+// RatingStorage.prototype._privateSetPhotos = function(array) {
+//   try {
+//     localStorage.setItem(this.key, JSON.stringify(array));
+//   }
+//   catch (e) {
+//     console.log('Caught an error: ' + e );
+//     this._fallBackArray = array;
+//   }
+// };
+
+
+// RatingStorage.photos = [];
 
 function Photo(fileName, fileType) {
   if (!fileName || fileName === fileType || parseInt(fileName) === NaN ) {
@@ -93,14 +117,14 @@ PhotoSet.prototype.containsDuplicate = function () {
 };
 
 PhotoSet.newSet = function() {
-  var somePhotos = photos.pickThreeNonRepeating();
+  var somePhotos = RatingStorage.pickThreeNonRepeating();
   return new PhotoSet(somePhotos, somePhotos);
 };
 
 PhotoSet.prototype.createNewRandomSet = function(){
-  var proposedSet = new PhotoSet(photos.pickThreeNonRepeating(), this.current);
+  var proposedSet = new PhotoSet(RatingStorage.pickThreeNonRepeating(), this.current);
   while(proposedSet.containsDuplicate()) {
-    proposedSet = new PhotoSet(photos.pickThreeNonRepeating(), this.current);
+    proposedSet = new PhotoSet(RatingStorage.pickThreeNonRepeating(), this.current);
   }
   return proposedSet;
 };
@@ -119,41 +143,38 @@ function contains(array, obj) {
   return false;
 };
 
-photos.getElementWithName = function(name) {
-  for(var eea in this) {
-    if (this[eea].fileName === name) {
-      return this[eea];
+RatingStorage.getElementWithName = function(name) {
+  for(var eea in RatingStorage.photos) {
+    if (RatingStorage.photos[eea].fileName === name) {
+      return RatingStorage.photos[eea];
     }
   }
   throw 'The name was not found in the phoros array';
 };
 
-photos.pickThreeNonRepeating = function () {
+RatingStorage.pickThreeNonRepeating = function () {
   var photosToPick = 3;
   var chosenPhotos = [];
   var indexes = [];
   while (indexes.length < photosToPick) {
-    var randomNumber = Math.floor(Math.random() * this.length);
+    var randomNumber = Math.floor(Math.random() * RatingStorage.photos.length);
     if(!indexes.includes(randomNumber)) {
       indexes.push(randomNumber);
     }
   }
   for (var eap in indexes) {
-    chosenPhotos.push(photos[indexes[eap]]);
+    chosenPhotos.push(RatingStorage.photos[indexes[eap]]);
   }
   return chosenPhotos;
 };
 
 // See if the object is in the photos array
-photos.containsPhoto = function(photo) {
-  return contains(this, photo);
+RatingStorage.containsPhoto = function(photo) {
+  return contains(RatingStorage.photos, photo);
 };
 
 // Resets all the photos to the ones on file
-photos.setupPhotoObjects = function (){
-
-  // resets the array contents with out removing prototype methods
-  photos.splice(0,photos.length); // assigning a new array removes all added methods
+RatingStorage.setupPhotoObjects = function (){
 
   var photosInfo = [
   ['bag', 		  'jpg'],
@@ -177,11 +198,13 @@ photos.setupPhotoObjects = function (){
   ['water-can', 'jpg'],
   ['wine-glass','jpg']
   ];
+  var temp_photos = [];
   for(var ea in photosInfo){
-    photos.push(
+    temp_photos.push(
     new Photo( photosInfo[ea][0], photosInfo[ea][1] )
   );
   }
+  RatingStorage.photos = temp_photos ;
 };
 
 function creatingChartElementAtParent(parent) {
@@ -191,8 +214,9 @@ function creatingChartElementAtParent(parent) {
   var labels = [];
   var likes = [];
   var views = [];
-  for(var eee = 0; eee < photos.length; eee++ ) {
-    var element = photos[eee];
+  var local_photos = RatingStorage.photos;
+  for(var eee = 0; eee < local_photos.length; eee++ ) {
+    var element = local_photos[eee];
     labels.push(element.fileName);
     views.push(element.views);
     likes.push(element.likes);
@@ -251,7 +275,8 @@ function chart (canvas, labelsArray, viewsArray, likesArray) {
 
 var maxclicksallowed =  25;
 var currentClicks = 0;
-photos.setupPhotoObjects();
+
+RatingStorage.setupPhotoObjects();
 var photoSetToDisplay = PhotoSet.newSet();
 
 var selectionWindow = document.getElementById('selectionWindow');
@@ -263,7 +288,7 @@ selectionWindow.displayNewSetOfImages = function(){
 
 function myClickHandler (event) {
   if (event.target.parentNode.className === 'imageSet') {
-    var element = photos.getElementWithName(event.target.getAttribute('id'));
+    var element = RatingStorage.getElementWithName(event.target.getAttribute('id'));
     element.likes += 1;
     currentClicks += 1;
     selectionWindow.displayNewSetOfImages();
@@ -272,7 +297,7 @@ function myClickHandler (event) {
     if (currentClicks === maxclicksallowed) {
       console.log('Game is done. Thanks for playing');
       creatingChartElementAtParent(selectionWindow);
-      console.table(photos);
+      console.table(RatingStorage.photos);
       selectionWindow.removeEventListener('click', myClickHandler);
     }
   }
