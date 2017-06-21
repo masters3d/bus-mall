@@ -4,8 +4,10 @@ console.log('hello world!');
 
 
 var photoskey = 'rateGamePhotos';
-function RatingStorage() {
-  this._fallBackArray = [];
+var _fallBackArray = [];
+
+var RatingStorage = {
+  // photos : []
 };
 
 Object.defineProperties(RatingStorage, { 'photos': {
@@ -16,7 +18,6 @@ Object.defineProperties(RatingStorage, { 'photos': {
 );
 
 console.log(RatingStorage);
-console.log(RatingStorage.prototype);
 
 RatingStorage._privateConvertPlainObjectsToPhotos = function(arrayObjs){
   var local_photos = arrayObjs;
@@ -42,10 +43,10 @@ RatingStorage._privateGetPhotos = function() {
     catch (e) {
       console.log('Caught an error: ' + e );
       // First time it runs set up the initial logic
-      if (this._fallBackArray.length === 0) {
-        this.setupPhotoObjects();
-      }
-      return this._fallBackArray;
+      // if (_fallBackArray.length === 0) {
+      //   this.setupPhotoObjects();
+      // }
+      return _fallBackArray;
     }
   }
 };
@@ -57,7 +58,7 @@ RatingStorage._privateSetPhotos = function(array) {
   }
   catch (e) {
     console.log('Caught an error: ' + e );
-    this._fallBackArray = array;
+    _fallBackArray = array;
   }
 };
 
@@ -92,6 +93,7 @@ Photo.prototype.creatingImageNode = function () {
   nodeElement.setAttribute('src', this.filePath());
   nodeElement.setAttribute('id', this.fileName);
   this.views += 1;
+  RatingStorage.setElementWithName(this.fileName, this);
   return nodeElement;
 };
 
@@ -161,11 +163,24 @@ RatingStorage.getElementWithName = function(name) {
   throw 'The name was not found in the phoros array';
 };
 
+RatingStorage.setElementWithName = function(name, value) {
+  for(var index = 0; index < RatingStorage.photos.length ; index ++ ) {
+    if (RatingStorage.photos[index].fileName === name) {
+      RatingStorage.photos[index] = value;
+      // exist after assigment
+      return;
+    }
+  }
+};
+
 RatingStorage.pickThreeNonRepeating = function () {
   var photosToPick = 3;
   var chosenPhotos = [];
   var indexes = [];
   var local_photos =  RatingStorage.photos;
+  if (local_photos.length === 0) {
+    throw 'The photos array is Zero. Expected full array';
+  }
   while (indexes.length < photosToPick) {
     var randomNumber = Math.floor(Math.random() * local_photos.length);
     if(!indexes.includes(randomNumber)) {
@@ -216,7 +231,7 @@ RatingStorage.setupPhotoObjects = function (){
   }
   //RatingStorage.photos = temp_photos ;
   console.log(temp_photos);
-  RatingStorage._privateSetPhotos(temp_photos);
+  RatingStorage.photos = temp_photos;
   return temp_photos;
 };
 
@@ -289,7 +304,7 @@ function chart (canvas, labelsArray, viewsArray, likesArray) {
 var maxclicksallowed =  25;
 var currentClicks = 0;
 
-//RatingStorage.setupPhotoObjects();
+RatingStorage.setupPhotoObjects();
 var photoSetToDisplay = PhotoSet.newSet();
 
 var selectionWindow = document.getElementById('selectionWindow');
@@ -303,6 +318,7 @@ function myClickHandler (event) {
   if (event.target.parentNode.className === 'imageSet') {
     var element = RatingStorage.getElementWithName(event.target.getAttribute('id'));
     element.likes += 1;
+    RatingStorage.setElementWithName(element.fileName, element);
     currentClicks += 1;
     selectionWindow.displayNewSetOfImages();
     console.log(currentClicks);
@@ -311,7 +327,7 @@ function myClickHandler (event) {
       console.log('Game is done. Thanks for playing');
       creatingChartElementAtParent(selectionWindow);
       console.table(RatingStorage.photos);
-      console.table(RatingStorage._fallBackArray);
+      console.table(_fallBackArray);
       selectionWindow.removeEventListener('click', myClickHandler);
     }
   }
