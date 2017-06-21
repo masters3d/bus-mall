@@ -2,7 +2,34 @@
 
 console.log('hello world!');
 
-var photos = [];
+var RatingStorage = {
+  _key: 'rateGamePhotos',
+  _fallBackArray : [],
+  get photos() {
+    if (localStorage) {
+      try {
+        return JSON.parse(localStorage.getObj(this._key));
+      }
+      catch (e) {
+        if (this._fallBackArray.length === 0) {
+          this.photos = [];
+        }
+        return this._fallBackArray;
+      }
+    }
+  },
+  set photos(array) {
+    try {
+      localStorage.setItem(this.key, JSON.stringify(array));
+    }
+    catch (e) {
+      this._fallBackArray = array;
+    }
+  }
+};
+
+var photos = RatingStorage.photos;
+
 function Photo(fileName, fileType) {
   if (!fileName || fileName === fileType || parseInt(fileName) === NaN ) {
     throw fileName + ' or ' + fileType + ' is invalid for the constructor';
