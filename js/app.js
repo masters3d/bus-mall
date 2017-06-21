@@ -3,65 +3,73 @@
 console.log('hello world!');
 
 
-var RatingStorage = {
-  photos : []
+var photoskey = 'rateGamePhotos';
+function RatingStorage() {
+  this._fallBackArray = [];
 };
 
-// function RatingStorage() {
-//   this._key = 'rateGamePhotos';
-//   this._fallBackArray = [];
-// };
-
-
-// Object.defineProperties(RatingStorage, 'photos', {
-//   get: function() {
-//     if (localStorage) {
-//       try {
-//         var toReturn = JSON.parse(localStorage.getItem(this._key));
-//         if (toReturn) {
-//           return toReturn;
-//         }
-//         throw 'JSON parsed came back as Nul';
-//       }
-//       catch (e) {
-//         console.log('Caught an error: ' + e );
-//         // First time it runs set up the initial logic
-//         if (this._fallBackArray.length === 0) {
-//           this.photos = [];
-//           this.setupPhotoObjects();
-//         }
-//         return this._fallBackArray;
-//       }
-//     }
-//   },
-//   set: function(value) { _privateSetPhotos(value); }
-// }
-// );
+Object.defineProperties(RatingStorage, { 'photos': {
+  get: function() { return this._privateGetPhotos(); },
+  set: function(value) { this._privateSetPhotos(value); }
+}
+}
+);
 
 console.log(RatingStorage);
 console.log(RatingStorage.prototype);
 
-// RatingStorage.prototype._privateSetPhotos = function(array) {
-//   try {
-//     localStorage.setItem(this.key, JSON.stringify(array));
-//   }
-//   catch (e) {
-//     console.log('Caught an error: ' + e );
-//     this._fallBackArray = array;
-//   }
-// };
+RatingStorage._privateConvertPlainObjectsToPhotos = function(arrayObjs){
+  var local_photos = arrayObjs;
+  var temp_photos = [];
+  for (var i3 = 0; i3 < local_photos.length; i3 += 1 ) {
+    var each = local_photos[i3];
+    console.log(each);
+    temp_photos.push(new Photo(each.fileName, each.fileType, each.views, each.likes));
+  }
+  return temp_photos;
+};
 
+RatingStorage._privateGetPhotos = function() {
+  if (localStorage) {
+    try {
+      var result = JSON.parse(localStorage.getItem(photoskey));
+      if (result) {
+        //this.photos = [];
+        return this._privateConvertPlainObjectsToPhotos(result);
+      }
+      throw 'JSON parsed came back as Nul';
+    }
+    catch (e) {
+      console.log('Caught an error: ' + e );
+      // First time it runs set up the initial logic
+      if (this._fallBackArray.length === 0) {
+        this.setupPhotoObjects();
+      }
+      return this._fallBackArray;
+    }
+  }
+};
+
+RatingStorage._privateSetPhotos = function(array) {
+  console.log('The set method is getting called');
+  try {
+    localStorage.setItem(photoskey, JSON.stringify(array));
+  }
+  catch (e) {
+    console.log('Caught an error: ' + e );
+    this._fallBackArray = array;
+  }
+};
 
 // RatingStorage.photos = [];
-
-function Photo(fileName, fileType) {
+function Photo(fileName, fileType, views, likes) {
   if (!fileName || fileName === fileType || parseInt(fileName) === NaN ) {
     throw fileName + ' or ' + fileType + ' is invalid for the constructor';
   }
   this.fileName = fileName;
   this.fileType = fileType;
-  this.views = 0;
-  this.likes = 0;
+  this.views = views ? views : 0;
+  this.likes = likes ? likes : 0;
 }
 
 Photo.prototype.statsAsString = function() {
@@ -133,6 +141,7 @@ PhotoSet.prototype.createNewRandomSet = function(){
 function contains(array, obj) {
 
   for (var eaIndex in array ) {
+    console.log(array);
     if (obj['isEqual'] === undefined || array[eaIndex]['isEqual'] === undefined ) { // eslint-disable-line
       throw 'Contains expects objects to implement isEqual() method';
     }
@@ -156,14 +165,15 @@ RatingStorage.pickThreeNonRepeating = function () {
   var photosToPick = 3;
   var chosenPhotos = [];
   var indexes = [];
+  var local_photos =  RatingStorage.photos;
   while (indexes.length < photosToPick) {
-    var randomNumber = Math.floor(Math.random() * RatingStorage.photos.length);
+    var randomNumber = Math.floor(Math.random() * local_photos.length);
     if(!indexes.includes(randomNumber)) {
       indexes.push(randomNumber);
     }
   }
   for (var eap in indexes) {
-    chosenPhotos.push(RatingStorage.photos[indexes[eap]]);
+    chosenPhotos.push(local_photos[indexes[eap]]);
   }
   return chosenPhotos;
 };
@@ -201,10 +211,13 @@ RatingStorage.setupPhotoObjects = function (){
   var temp_photos = [];
   for(var ea in photosInfo){
     temp_photos.push(
-    new Photo( photosInfo[ea][0], photosInfo[ea][1] )
+      new Photo( photosInfo[ea][0], photosInfo[ea][1], photosInfo[ea][2], photosInfo[ea][3])
   );
   }
-  RatingStorage.photos = temp_photos ;
+  //RatingStorage.photos = temp_photos ;
+  console.log(temp_photos);
+  RatingStorage._privateSetPhotos(temp_photos);
+  return temp_photos;
 };
 
 function creatingChartElementAtParent(parent) {
@@ -276,7 +289,7 @@ function chart (canvas, labelsArray, viewsArray, likesArray) {
 var maxclicksallowed =  25;
 var currentClicks = 0;
 
-RatingStorage.setupPhotoObjects();
+//RatingStorage.setupPhotoObjects();
 var photoSetToDisplay = PhotoSet.newSet();
 
 var selectionWindow = document.getElementById('selectionWindow');
@@ -298,6 +311,7 @@ function myClickHandler (event) {
       console.log('Game is done. Thanks for playing');
       creatingChartElementAtParent(selectionWindow);
       console.table(RatingStorage.photos);
+      console.table(RatingStorage._fallBackArray);
       selectionWindow.removeEventListener('click', myClickHandler);
     }
   }
