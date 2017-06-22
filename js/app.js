@@ -157,23 +157,72 @@ photos.setupPhotoObjects = function (){
   }
 };
 
-function creatingStatisticElements() {
-  var nodeElement = document.createElement('ul');
+function creatingChartElementAtParent(parent) {
+  var canvasNode = document.createElement('canvas');
+  canvasNode.setAttribute('id', 'chart');
+
+  var labels = [];
+  var likes = [];
+  var views = [];
   for(var eee = 0; eee < photos.length; eee++ ) {
     var element = photos[eee];
-    var li = document.createElement('li');
-    li.textContent = element.statsAsString();
-    nodeElement.appendChild(li);
+    labels.push(element.fileName);
+    views.push(element.views);
+    likes.push(element.likes);
+
   }
-  return nodeElement;
+  parent.appendChild(canvasNode);
+  chart(canvasNode, labels, views, likes );
 };
 
 
-//****************
-/// START OF GAME
-//****************
+function chart (canvas, labelsArray, viewsArray, likesArray) {
+  var ctx = canvas.getContext('2d');
 
-var roundsToDisplay =  25;
+  // modeled after the Getting Started example in the chartJS docs
+  new Chart(ctx, {
+    // The type of chart we want to create
+    type: 'bar',
+
+    // The data for our dataset
+    data: {
+      labels: labelsArray,
+      datasets: [
+        {
+          label: 'Number of Likes',
+          backgroundColor: 'rgb(255, 99, 132)',
+          borderColor: 'rgb(255, 99, 132)',
+          data: likesArray,
+        },
+        {
+          label: 'Number of Views',
+          backgroundColor: 'rgb(255, 150, 132)',
+          borderColor: 'rgb(255, 99, 132)',
+          data: viewsArray,
+        }
+      ],
+    },
+
+    // Configuration options go here
+    options: {
+      scales: {
+        yAxes: [{
+          ticks: {
+            // beginAtZero: true,
+          }
+        }],
+      //   ,
+        xAxes: [{stacked: true}],
+      }
+    }
+  });
+}
+
+//*****************
+/// START OF GAME
+//*****************
+
+var maxclicksallowed =  25;
 var currentClicks = 0;
 photos.setupPhotoObjects();
 var photoSetToDisplay = PhotoSet.newSet();
@@ -193,9 +242,9 @@ function myClickHandler (event) {
     selectionWindow.displayNewSetOfImages();
     console.log(currentClicks);
 
-    if (currentClicks === roundsToDisplay) {
+    if (currentClicks === maxclicksallowed) {
       console.log('Game is done. Thanks for playing');
-      selectionWindow.appendChild(creatingStatisticElements());
+      creatingChartElementAtParent(selectionWindow);
       console.table(photos);
       selectionWindow.removeEventListener('click', myClickHandler);
     }
