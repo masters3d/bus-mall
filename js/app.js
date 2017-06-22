@@ -53,7 +53,7 @@ RatingStorage.setupPhotoObjects = function (){
 };
 
 function _privateConvertPlainObjectsToPhotos(arrayObjs) {
-  if (!arrayObjs) { throw 'arrayObjs not valid'; };
+  if (!arrayObjs) { throw 'arrayObjs not valid' + arrayObjs; };
   var temp_photos = [];
   for (var i3 = 0; i3 < arrayObjs.length; i3 += 1 ) {
     var each = arrayObjs[i3];
@@ -66,11 +66,18 @@ RatingStorage.loadState = function() {
   if (localStorage) {
     try {
       photos = this.getPhotosArray();
+      var currentClicksStore = localStorage.getItem(this.key + 'currentClicks');
+      currentClicks = parseInt(currentClicksStore);
+      var currentPhotosToDisplay = JSON.parse(localStorage.getItem(this.key + 'photoSetToDisplay'));
+      restoredSetOfPhotos = _privateConvertPlainObjectsToPhotos(currentPhotosToDisplay);
     }
     catch (e) {
       if (photos.length === 0) {
         RatingStorage.setupPhotoObjects();
-        console.log('Reset the data starting point' + e);
+        console.log('Reset the photos starting point' + e);
+      } else if (!currentClicks) {
+        currentClicks = 0;
+        console.log('Reset the currentClicks starting point' + e);
       } else {
         console.log('Load state failed' + e);
       }
@@ -81,8 +88,10 @@ RatingStorage.loadState = function() {
 RatingStorage.saveState = function() {
   try {
     var stringPhotos = JSON.stringify(photos);
-    console.log('Photos are strings   :' + stringPhotos);
     localStorage.setItem(this.key, stringPhotos);
+    localStorage.setItem(this.key + 'currentClicks', currentClicks);
+    localStorage.setItem(this.key + 'photoSetToDisplay', JSON.stringify(photoSetToDisplay.current));
+    console.log('Save state successfull');
     return true;
   }
   catch (e) {
@@ -228,7 +237,6 @@ function creatingChartElementAtParent(parent) {
   chart(canvasNode, labels, views, likes );
 };
 
-
 function chart (canvas, labelsArray, viewsArray, likesArray) {
   var ctx = canvas.getContext('2d');
 
@@ -277,14 +285,28 @@ function chart (canvas, labelsArray, viewsArray, likesArray) {
 
 var maxclicksallowed =  25;
 var currentClicks = 0;
+var restoredSetOfPhotos = null;
 RatingStorage.loadState();
 var photoSetToDisplay = PhotoSet.newSet();
+photoSetToDisplay.current = restoredSetOfPhotos ? restoredSetOfPhotos : photoSetToDisplay.current;
+photoSetToDisplay = currentClicks ? photoSetToDisplay : PhotoSet.newSet();
 
 var selectionWindow = document.getElementById('selectionWindow');
+
+selectionWindow.displayImageSet = function(imageSet) {
+  selectionWindow.appendChild(imageSet.creatingImageNodes());
+};
 selectionWindow.displayNewSetOfImages = function(){
+  console.log(currentClicks);
   selectionWindow.textContent = '';
   photoSetToDisplay = photoSetToDisplay.createNewRandomSet();
-  selectionWindow.appendChild(photoSetToDisplay.creatingImageNodes());
+  this.displayImageSet(photoSetToDisplay);
+};
+var infoText = document.getElementById('infoWindow');
+infoText.updateTextCounter = function() {
+  if (currentClicks) {
+    this.textContent = currentClicks + ' selections out of ' + maxclicksallowed;
+  }
 };
 
 function myClickHandler (event) {
@@ -293,13 +315,16 @@ function myClickHandler (event) {
     element.likes += 1;
     currentClicks += 1;
     selectionWindow.displayNewSetOfImages();
+    infoText.updateTextCounter();
+    RatingStorage.saveState();
     console.log(currentClicks);
 
-    if (currentClicks === maxclicksallowed) {
+    if (currentClicks >= maxclicksallowed) {
       console.log('Game is done. Thanks for playing');
       creatingChartElementAtParent(selectionWindow);
       console.table(photos);
       selectionWindow.removeEventListener('click', myClickHandler);
+      currentClicks = 0;
       RatingStorage.saveState();
       console.table(RatingStorage.getPhotosArray());
     }
@@ -307,4 +332,5 @@ function myClickHandler (event) {
 };
 
 selectionWindow.addEventListener('click', myClickHandler);
-selectionWindow.displayNewSetOfImages();
+selectionWindow.displayImageSet(photoSetToDisplay);
+infoText.updateTextCounter();
