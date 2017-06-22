@@ -304,8 +304,15 @@ selectionWindow.displayNewSetOfImages = function(){
 };
 var infoText = document.getElementById('infoWindow');
 infoText.updateTextCounter = function() {
-  if (currentClicks) {
+  if (currentClicks > 0 && currentClicks < maxclicksallowed ) {
     this.textContent = currentClicks + ' selections out of ' + maxclicksallowed;
+  } else if (currentClicks === maxclicksallowed) {
+    var link = document.createElement('a');
+    link.setAttribute('href', '');
+    link.setAttribute('id', this.fileName);
+    this.textContent = 'Thanks for playing';
+    link.textContent = 'Play Again';
+    selectionWindow.appendChild(link);
   }
 };
 

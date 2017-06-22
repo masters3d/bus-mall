@@ -8,5 +8,22 @@
 }
 
 .imageSet {
-border-style: dotted;
+
+}
+
+.imageSet img:hover {
+  transition-duration: 100ms;
+  transition-timing-function: linear;
+  opacity: 0.9;
+  border-style:outset ;
+  transform: scale(1.1);
+  transform: translateY(-15px);
+
+}
+
+.imageSet img:active {
+  transition-duration: 50ms;
+  transition-timing-function: linear;
+  outline: 2px solid red;
+  transform: rotate(180deg);
 }
