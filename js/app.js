@@ -310,9 +310,9 @@ infoText.updateTextCounter = function() {
     var link = document.createElement('a');
     link.setAttribute('href', '');
     link.setAttribute('id', this.fileName);
-    this.textContent = 'Thanks for playing';
     link.textContent = 'Play Again';
     selectionWindow.appendChild(link);
+    this.textContent = 'Thanks for playing';
   }
 };
 
