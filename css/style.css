@@ -8,5 +8,44 @@
 }
 
 .imageSet {
-border-style: dotted;
+  border-style: inset ;
+}
+
+.imageSet:hover {
+  border-style: groove;
+}
+
+.imageSet:hover img {
+  transform: rotate(-10deg);
+}
+
+img:hover ~ img {
+  transform: translateY(15px);
+  opacity: 0.5;
+  transform: rotate(10deg);
+}
+
+
+.imageSet img:hover {
+  transition-duration: 100ms;
+  transition-timing-function: linear;
+  opacity: 0.9;
+  transform: scale(1.1);
+  transform: translateY(-15px);
+  border-radius: 10;
+  border-style: dotted;
+  border-radius: 50%;
+
+}
+
+.imageSet img:active {
+  transition-duration: 50ms;
+  transition-timing-function: linear;
+  outline: 2px solid red;
+  transform: rotate(180deg);
+  transform: scale(2);
+  border-radius: 50%;
+  opacity: 0.0;
+
+
 }
