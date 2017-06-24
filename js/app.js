@@ -9,25 +9,38 @@ RatingStorage.getPhotosArray = function () {
   var objects = JSON.parse(localStorage.getItem(this.key));
 
   if (!objects) {
-    RatingStorage.setupPhotoObjects();
+    photos = RatingStorage.createBlankPhotoObjectsArray();
     return photos;
   }
 
   return _privateConvertPlainObjectsToPhotos(objects);
 };
 
-// Resets all the photos to the ones on file
-RatingStorage.setupPhotoObjects = function (){
+RatingStorage.createBlankNestedObject = function() {
+  var target = {};
+  var source = this.createBlankPhotoObjectsArray();
+  for (var key in source){
+    var name = source[key]['fileName'];
+    target[name] = { views: 0, likes: 0 };
+  }
+  return target;
+};
+
+// Returns a blank set of photo objects
+RatingStorage.createBlankPhotoObjectsArray = function (){
 
   var photosInfo = ['bag.jpg', 'banana.jpg', 'bathroom.jpg', 'boots.jpg', 'breakfast.jpg', 'bubblegum.jpg', 'chair.jpg', 'cthulhu.jpg', 'dog-duck.jpg', 'dragon.jpg', 'pen.jpg', 'pet-sweep.jpg', 'scissors.jpg', 'shark.jpg', 'sweep.png', 'tauntaun.jpg', 'unicorn.jpg', 'usb.gif', 'water-can.jpg', 'wine-glass.jpg' ];
+
+  var toReturn = [];
 
   for(var ea in photosInfo){
     var filename = photosInfo[ea].split('.')[0];
     var filetype = photosInfo[ea].split('.')[1];
-    photos.push(
+    toReturn.push(
     new Photo(filename, filetype)
   );
   }
+  return toReturn;
 };
 
 function _privateConvertPlainObjectsToPhotos(arrayObjs) {
@@ -51,7 +64,7 @@ RatingStorage.loadState = function() {
     }
     catch (e) {
       if (photos.length === 0) {
-        RatingStorage.setupPhotoObjects();
+        photos = RatingStorage.createBlankPhotoObjectsArray();
       } else if (!currentClicks) {
         currentClicks = 0;
       } else {
@@ -122,6 +135,7 @@ Photo.prototype.creatingImageNode = function () {
   nodeElement.setAttribute('title', this.titleName().toUpperCase());
 
   this.views += 1;
+  currentIterationData[this.fileName].views += 1;
   return nodeElement;
 };
 
@@ -169,7 +183,6 @@ PhotoSet.prototype.createNewRandomSet = function(){
 
 // Free helper function
 function contains(array, obj) {
-
   for (var eaIndex in array ) {
     if (obj['isEqual'] === undefined || array[eaIndex]['isEqual'] === undefined ) { // eslint-disable-line
       throw 'Contains expects objects to implement isEqual() method';
@@ -211,25 +224,30 @@ RatingStorage.containsPhoto = function(photo) {
   return contains(photos, photo);
 };
 
-function creatingChartElementAtParent(parent) {
+function creatingChartElementAtParent(parent, photosData, chartTitle) {
   var canvasNode = document.createElement('canvas');
   canvasNode.setAttribute('id', 'chart');
 
   var labels = [];
   var likes = [];
   var views = [];
-  for(var eee = 0; eee < photos.length; eee++ ) {
-    var element = photos[eee];
-    labels.push(element.titleName());
+  for(var keyName in photosData ) {
+    var element = photosData[keyName];
     views.push(element.views);
     likes.push(element.likes);
 
+    try {
+      labels.push(element.titleName());
+    } catch(e) {
+      labels.push(keyName);
+    }
+
   }
   parent.appendChild(canvasNode);
-  chart(canvasNode, labels, views, likes );
+  chart(canvasNode, labels, views, likes, chartTitle);
 };
 
-function chart (canvas, labelsArray, viewsArray, likesArray) {
+function chart (canvas, labelsArray, viewsArray, likesArray, chartTitle) {
   var ctx = canvas.getContext('2d');
 
   // modeled after the Getting Started example in the chartJS docs
@@ -258,6 +276,10 @@ function chart (canvas, labelsArray, viewsArray, likesArray) {
 
     // Configuration options go here
     options: {
+      title: {
+        display: true,
+        text: chartTitle
+      },
       scales: {
         yAxes: [{
           ticks: {
@@ -278,6 +300,7 @@ function chart (canvas, labelsArray, viewsArray, likesArray) {
 var maxclicksallowed =  25;
 var currentClicks = 0;
 var restoredSetOfPhotos = null;
+var currentIterationData = RatingStorage.createBlankNestedObject();
 RatingStorage.loadState();
 var photoSetToDisplay = PhotoSet.newSet();
 photoSetToDisplay.current = restoredSetOfPhotos ? restoredSetOfPhotos : photoSetToDisplay.current;
@@ -311,14 +334,17 @@ function myClickHandler (event) {
   if (event.target.parentNode.className === 'imageSet') {
     var element = RatingStorage.getElementWithName(event.target.getAttribute('id'));
     element.likes += 1;
+    currentIterationData[element.fileName].likes += 1;
     currentClicks += 1;
     selectionWindow.displayNewSetOfImages();
     infoText.updateTextCounter();
     RatingStorage.saveState();
 
     if (currentClicks >= maxclicksallowed) {
-      creatingChartElementAtParent(selectionWindow);
-      console.table(photos);
+      creatingChartElementAtParent(selectionWindow, currentIterationData, 'Current Iteration Chart');
+      creatingChartElementAtParent(selectionWindow, photos, 'All Iterations Chart');
+      console.table(currentIterationData);
+      console.table(photos, ['fileName', 'views', 'likes']);
       selectionWindow.removeEventListener('click', myClickHandler);
       currentClicks = 0;
       RatingStorage.saveState();
