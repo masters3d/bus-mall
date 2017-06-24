@@ -1,7 +1,5 @@
 'use strict';
 
-console.log('hello world!');
-
 var photos = [];
 var RatingStorage = {
   key: 'rateGamePhotos',
@@ -9,8 +7,6 @@ var RatingStorage = {
 
 RatingStorage.getPhotosArray = function () {
   var objects = JSON.parse(localStorage.getItem(this.key));
-  console.log('object coming out of storage   <' + typeof(objects) + '>  actual object   ===>' + objects);
-  console.log();
 
   if (!objects) {
     RatingStorage.setupPhotoObjects();
@@ -23,31 +19,13 @@ RatingStorage.getPhotosArray = function () {
 // Resets all the photos to the ones on file
 RatingStorage.setupPhotoObjects = function (){
 
-  var photosInfo = [
-  ['bag', 		  'jpg'],
-  ['banana', 		'jpg'],
-  ['bathroom', 	'jpg'],
-  ['boots', 		'jpg'],
-  ['breakfast',	'jpg'],
-  ['bubblegum', 'jpg'],
-  ['chair', 		'jpg'],
-  ['cthulhu', 	'jpg'],
-  ['dog-duck', 	'jpg'],
-  ['dragon', 		'jpg'],
-  ['pen', 		  'jpg'],
-  ['pet-sweep', 'jpg'],
-  ['scissors', 	'jpg'],
-  ['shark', 		'jpg'],
-  ['sweep', 		'png'],
-  ['tauntaun', 	'jpg'],
-  ['unicorn', 	'jpg'],
-  ['usb', 		  'gif'],
-  ['water-can', 'jpg'],
-  ['wine-glass','jpg']
-  ];
+  var photosInfo = ['bag.jpg', 'banana.jpg', 'bathroom.jpg', 'boots.jpg', 'breakfast.jpg', 'bubblegum.jpg', 'chair.jpg', 'cthulhu.jpg', 'dog-duck.jpg', 'dragon.jpg', 'pen.jpg', 'pet-sweep.jpg', 'scissors.jpg', 'shark.jpg', 'sweep.png', 'tauntaun.jpg', 'unicorn.jpg', 'usb.gif', 'water-can.jpg', 'wine-glass.jpg' ];
+
   for(var ea in photosInfo){
+    var filename = photosInfo[ea].split('.')[0];
+    var filetype = photosInfo[ea].split('.')[1];
     photos.push(
-    new Photo( photosInfo[ea][0], photosInfo[ea][1] )
+    new Photo(filename, filetype)
   );
   }
 };
@@ -74,12 +52,10 @@ RatingStorage.loadState = function() {
     catch (e) {
       if (photos.length === 0) {
         RatingStorage.setupPhotoObjects();
-        console.log('Reset the photos starting point' + e);
       } else if (!currentClicks) {
         currentClicks = 0;
-        console.log('Reset the currentClicks starting point' + e);
       } else {
-        console.log('Load state failed' + e);
+        console.warn('Load state failed' + e);
       }
     }
   }
@@ -91,11 +67,10 @@ RatingStorage.saveState = function() {
     localStorage.setItem(this.key, stringPhotos);
     localStorage.setItem(this.key + 'currentClicks', currentClicks);
     localStorage.setItem(this.key + 'photoSetToDisplay', JSON.stringify(photoSetToDisplay.current));
-    console.log('Save state successfull');
     return true;
   }
   catch (e) {
-    console.log('Save state failed' + e);
+    console.warn('Save state failed' + e);
     return false;
   }
 };
@@ -108,6 +83,20 @@ function Photo(fileName, fileType, views, likes ) {
   this.fileType = fileType;
   this.views = views ? views : 0 ;
   this.likes = likes ? likes : 0 ;
+};
+
+function _privateToUpperFirst(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+Photo.prototype.titleName = function() {
+  if (this.fileName !==  undefined && this.fileName !== null ) { // eslint-disable-line
+    var name = this.fileName;
+    return name.split('-')[0] === name ? _privateToUpperFirst(name) :
+      _privateToUpperFirst(name.split('-')[0]) + ' ' + _privateToUpperFirst(name.split('-')[1]);
+  } else {
+    console.warn('Title Name was called on a null object');
+  }
 };
 
 Photo.prototype.statsAsString = function() {
@@ -128,7 +117,10 @@ Photo.prototype.isEqual = function (obj) {
 Photo.prototype.creatingImageNode = function () {
   var nodeElement = document.createElement('img');
   nodeElement.setAttribute('src', this.filePath());
-  nodeElement.setAttribute('id', this.fileName);
+  nodeElement.setAttribute('id', this.fileName );
+  nodeElement.setAttribute('alt', this.titleName() );
+  nodeElement.setAttribute('title', this.titleName().toUpperCase());
+
   this.views += 1;
   return nodeElement;
 };
@@ -228,7 +220,7 @@ function creatingChartElementAtParent(parent) {
   var views = [];
   for(var eee = 0; eee < photos.length; eee++ ) {
     var element = photos[eee];
-    labels.push(element.fileName);
+    labels.push(element.titleName());
     views.push(element.views);
     likes.push(element.likes);
 
@@ -297,7 +289,6 @@ selectionWindow.displayImageSet = function(imageSet) {
   selectionWindow.appendChild(imageSet.creatingImageNodes());
 };
 selectionWindow.displayNewSetOfImages = function(){
-  console.log(currentClicks);
   selectionWindow.textContent = '';
   photoSetToDisplay = photoSetToDisplay.createNewRandomSet();
   this.displayImageSet(photoSetToDisplay);
@@ -324,16 +315,13 @@ function myClickHandler (event) {
     selectionWindow.displayNewSetOfImages();
     infoText.updateTextCounter();
     RatingStorage.saveState();
-    console.log(currentClicks);
 
     if (currentClicks >= maxclicksallowed) {
-      console.log('Game is done. Thanks for playing');
       creatingChartElementAtParent(selectionWindow);
       console.table(photos);
       selectionWindow.removeEventListener('click', myClickHandler);
       currentClicks = 0;
       RatingStorage.saveState();
-      console.table(RatingStorage.getPhotosArray());
     }
   }
 };
