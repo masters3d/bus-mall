@@ -59,12 +59,23 @@ RatingStorage.loadState = function() {
       photos = this.getPhotosArray();
       var currentClicksStore = localStorage.getItem(this.key + 'currentClicks');
       currentClicks = parseInt(currentClicksStore);
+      currentIterationData = JSON.parse(localStorage.getItem(this.key + 'currentIterationData'));
       var currentPhotosToDisplay = JSON.parse(localStorage.getItem(this.key + 'photoSetToDisplay'));
+
+      if (photos === null || currentClicks === null || currentIterationData === null || currentPhotosToDisplay === null ) {
+        photos = RatingStorage.createBlankPhotoObjectsArray();
+        currentClicks = 0;
+        currentIterationData = RatingStorage.createBlankNestedObject();
+        //restoredSetOfPhotos reset being handled on the call site
+      }
+      // This function can trow
       restoredSetOfPhotos = _privateConvertPlainObjectsToPhotos(currentPhotosToDisplay);
+
     }
     catch (e) {
       if (photos.length === 0) {
         photos = RatingStorage.createBlankPhotoObjectsArray();
+        currentIterationData = RatingStorage.createBlankNestedObject();
       } else if (!currentClicks) {
         currentClicks = 0;
       } else {
@@ -80,6 +91,7 @@ RatingStorage.saveState = function() {
     localStorage.setItem(this.key, stringPhotos);
     localStorage.setItem(this.key + 'currentClicks', currentClicks);
     localStorage.setItem(this.key + 'photoSetToDisplay', JSON.stringify(photoSetToDisplay.current));
+    localStorage.setItem(this.key + 'currentIterationData', JSON.stringify(currentIterationData));
     return true;
   }
   catch (e) {
