@@ -9,9 +9,22 @@
 
 * I want to know how many more images I have to click on in order to be done.
 
+## Developer
+
+* As a developer I want to be able to restore state of the app in between a selection session.
+
+* As a developer I want to persist the images that are currently being shown on the screen when the user come back to the session.
+
+* As a developer I want to know the difference in percentages of clicks vs views per session and across all sessions.  
+
+* As a developer I want to be able to add more charts with out having to check the code significantly.
+
+* As a developer I wan to be able to made a distintion between current stats and all stats. 
+
+
 #### Marketeer Stories
 
-* As a bus-mall employee I wan to be able to get the statistics of the user provide suggestions.
+* As a bus-mall employee I want to be able to get the statistics of the user provide suggestions.
 
 * As a bus-mall employee I want to be provided all the statistics but I do not want to show these statistics to the User but only they have liked 25 images.
 

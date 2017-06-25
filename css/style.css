@@ -46,6 +46,20 @@ img:hover ~ img {
   transform: scale(2);
   border-radius: 50%;
   opacity: 0.0;
+}
 
-
+/*reference*/
+/*https://www.webdesignerdepot.com/2012/11/how-to-create-a-simple-css3-tooltip/*/
+.imageSet img:hover:after{
+    background: #333;
+    background: rgba(0,0,0,.8);
+    border-radius: 5px;
+    bottom: 26px;
+    color: #fff;
+    content: attr(title);
+    left: 20%;
+    padding: 5px 15px;
+    position: absolute;
+    z-index: 98;
+    width: 220px;
 }

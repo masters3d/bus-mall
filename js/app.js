@@ -1,7 +1,5 @@
 'use strict';
 
-console.log('hello world!');
-
 var photos = [];
 var RatingStorage = {
   key: 'rateGamePhotos',
@@ -9,47 +7,40 @@ var RatingStorage = {
 
 RatingStorage.getPhotosArray = function () {
   var objects = JSON.parse(localStorage.getItem(this.key));
-  console.log('object coming out of storage   <' + typeof(objects) + '>  actual object   ===>' + objects);
-  console.log();
 
   if (!objects) {
-    RatingStorage.setupPhotoObjects();
+    photos = RatingStorage.createBlankPhotoObjectsArray();
     return photos;
   }
 
   return _privateConvertPlainObjectsToPhotos(objects);
 };
 
-// Resets all the photos to the ones on file
-RatingStorage.setupPhotoObjects = function (){
+RatingStorage.createBlankNestedObject = function() {
+  var target = {};
+  var source = this.createBlankPhotoObjectsArray();
+  for (var key in source){
+    var name = source[key]['fileName'];
+    target[name] = { views: 0, likes: 0 };
+  }
+  return target;
+};
 
-  var photosInfo = [
-  ['bag', 		  'jpg'],
-  ['banana', 		'jpg'],
-  ['bathroom', 	'jpg'],
-  ['boots', 		'jpg'],
-  ['breakfast',	'jpg'],
-  ['bubblegum', 'jpg'],
-  ['chair', 		'jpg'],
-  ['cthulhu', 	'jpg'],
-  ['dog-duck', 	'jpg'],
-  ['dragon', 		'jpg'],
-  ['pen', 		  'jpg'],
-  ['pet-sweep', 'jpg'],
-  ['scissors', 	'jpg'],
-  ['shark', 		'jpg'],
-  ['sweep', 		'png'],
-  ['tauntaun', 	'jpg'],
-  ['unicorn', 	'jpg'],
-  ['usb', 		  'gif'],
-  ['water-can', 'jpg'],
-  ['wine-glass','jpg']
-  ];
+// Returns a blank set of photo objects
+RatingStorage.createBlankPhotoObjectsArray = function (){
+
+  var photosInfo = ['bag.jpg', 'banana.jpg', 'bathroom.jpg', 'boots.jpg', 'breakfast.jpg', 'bubblegum.jpg', 'chair.jpg', 'cthulhu.jpg', 'dog-duck.jpg', 'dragon.jpg', 'pen.jpg', 'pet-sweep.jpg', 'scissors.jpg', 'shark.jpg', 'sweep.png', 'tauntaun.jpg', 'unicorn.jpg', 'usb.gif', 'water-can.jpg', 'wine-glass.jpg' ];
+
+  var toReturn = [];
+
   for(var ea in photosInfo){
-    photos.push(
-    new Photo( photosInfo[ea][0], photosInfo[ea][1] )
+    var filename = photosInfo[ea].split('.')[0];
+    var filetype = photosInfo[ea].split('.')[1];
+    toReturn.push(
+    new Photo(filename, filetype)
   );
   }
+  return toReturn;
 };
 
 function _privateConvertPlainObjectsToPhotos(arrayObjs) {
@@ -68,18 +59,27 @@ RatingStorage.loadState = function() {
       photos = this.getPhotosArray();
       var currentClicksStore = localStorage.getItem(this.key + 'currentClicks');
       currentClicks = parseInt(currentClicksStore);
+      currentIterationData = JSON.parse(localStorage.getItem(this.key + 'currentIterationData'));
       var currentPhotosToDisplay = JSON.parse(localStorage.getItem(this.key + 'photoSetToDisplay'));
+
+      if (photos === null || currentClicks === null || currentIterationData === null || currentPhotosToDisplay === null ) {
+        photos = RatingStorage.createBlankPhotoObjectsArray();
+        currentClicks = 0;
+        currentIterationData = RatingStorage.createBlankNestedObject();
+        //restoredSetOfPhotos reset being handled on the call site
+      }
+      // This function can trow
       restoredSetOfPhotos = _privateConvertPlainObjectsToPhotos(currentPhotosToDisplay);
+
     }
     catch (e) {
       if (photos.length === 0) {
-        RatingStorage.setupPhotoObjects();
-        console.log('Reset the photos starting point' + e);
+        photos = RatingStorage.createBlankPhotoObjectsArray();
+        currentIterationData = RatingStorage.createBlankNestedObject();
       } else if (!currentClicks) {
         currentClicks = 0;
-        console.log('Reset the currentClicks starting point' + e);
       } else {
-        console.log('Load state failed' + e);
+        console.warn('Load state failed' + e);
       }
     }
   }
@@ -91,11 +91,11 @@ RatingStorage.saveState = function() {
     localStorage.setItem(this.key, stringPhotos);
     localStorage.setItem(this.key + 'currentClicks', currentClicks);
     localStorage.setItem(this.key + 'photoSetToDisplay', JSON.stringify(photoSetToDisplay.current));
-    console.log('Save state successfull');
+    localStorage.setItem(this.key + 'currentIterationData', JSON.stringify(currentIterationData));
     return true;
   }
   catch (e) {
-    console.log('Save state failed' + e);
+    console.warn('Save state failed' + e);
     return false;
   }
 };
@@ -108,6 +108,20 @@ function Photo(fileName, fileType, views, likes ) {
   this.fileType = fileType;
   this.views = views ? views : 0 ;
   this.likes = likes ? likes : 0 ;
+};
+
+function _privateToUpperFirst(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+Photo.prototype.titleName = function() {
+  if (this.fileName !==  undefined && this.fileName !== null ) { // eslint-disable-line
+    var name = this.fileName;
+    return name.split('-')[0] === name ? _privateToUpperFirst(name) :
+      _privateToUpperFirst(name.split('-')[0]) + ' ' + _privateToUpperFirst(name.split('-')[1]);
+  } else {
+    console.warn('Title Name was called on a null object');
+  }
 };
 
 Photo.prototype.statsAsString = function() {
@@ -128,8 +142,12 @@ Photo.prototype.isEqual = function (obj) {
 Photo.prototype.creatingImageNode = function () {
   var nodeElement = document.createElement('img');
   nodeElement.setAttribute('src', this.filePath());
-  nodeElement.setAttribute('id', this.fileName);
+  nodeElement.setAttribute('id', this.fileName );
+  nodeElement.setAttribute('alt', this.titleName() );
+  nodeElement.setAttribute('title', this.titleName().toUpperCase());
+
   this.views += 1;
+  currentIterationData[this.fileName].views += 1;
   return nodeElement;
 };
 
@@ -177,7 +195,6 @@ PhotoSet.prototype.createNewRandomSet = function(){
 
 // Free helper function
 function contains(array, obj) {
-
   for (var eaIndex in array ) {
     if (obj['isEqual'] === undefined || array[eaIndex]['isEqual'] === undefined ) { // eslint-disable-line
       throw 'Contains expects objects to implement isEqual() method';
@@ -219,25 +236,59 @@ RatingStorage.containsPhoto = function(photo) {
   return contains(photos, photo);
 };
 
-function creatingChartElementAtParent(parent) {
+function creatingListElementAtParent(parent) {
+  var sameRatioOccurences = 0;
+  var ul = document.createElement('ul');
+  for (var each in photos) {
+    var element = photos[each];
+    var allRatio = Math.round((element.likes / element.views) * 100);
+    var currentElement = currentIterationData[element.fileName] ;
+    var thisRatio = Math.round((currentElement.likes / currentElement.views) * 100) ;
+    var li = document.createElement('li');
+
+    if (thisRatio === allRatio ) {
+      sameRatioOccurences += 1;
+      li.textContent = element.titleName() + ' has the same ' + thisRatio + '% than previous runs.';
+    } else {
+      li.textContent = element.titleName() + ' has a ' + thisRatio + '% for this run. Previous runs: ' + allRatio + '%';
+    }
+    ul.appendChild(li);
+  } // end of for loop
+  var ulTitle = document.createElement('h3');
+
+  if (photos.length === sameRatioOccurences) {
+    ulTitle.textContent = 'First run? Run again for more percentage stats';
+  } else {
+    ulTitle.textContent = 'Ratios of click vs views';
+  }
+  parent.appendChild(ulTitle);
+  parent.appendChild(ul);
+}
+
+function creatingChartElementAtParent(parent, photosData, chartTitle) {
   var canvasNode = document.createElement('canvas');
   canvasNode.setAttribute('id', 'chart');
 
   var labels = [];
   var likes = [];
   var views = [];
-  for(var eee = 0; eee < photos.length; eee++ ) {
-    var element = photos[eee];
-    labels.push(element.fileName);
+  for(var keyName in photosData ) {
+    var element = photosData[keyName];
     views.push(element.views);
     likes.push(element.likes);
 
+    try {
+      labels.push(element.titleName());
+    } catch(e) {
+      labels.push(keyName);
+    }
+
   }
   parent.appendChild(canvasNode);
-  chart(canvasNode, labels, views, likes );
+  chart(canvasNode, labels, views, likes, chartTitle);
 };
 
-function chart (canvas, labelsArray, viewsArray, likesArray) {
+function chart (canvas, labelsArray, viewsArray, likesArray, chartTitle) {
   var ctx = canvas.getContext('2d');
 
   // modeled after the Getting Started example in the chartJS docs
@@ -266,6 +317,10 @@ function chart (canvas, labelsArray, viewsArray, likesArray) {
 
     // Configuration options go here
     options: {
+      title: {
+        display: true,
+        text: chartTitle
+      },
       scales: {
         yAxes: [{
           ticks: {
@@ -286,6 +341,7 @@ function chart (canvas, labelsArray, viewsArray, likesArray) {
 var maxclicksallowed =  25;
 var currentClicks = 0;
 var restoredSetOfPhotos = null;
+var currentIterationData = RatingStorage.createBlankNestedObject();
 RatingStorage.loadState();
 var photoSetToDisplay = PhotoSet.newSet();
 photoSetToDisplay.current = restoredSetOfPhotos ? restoredSetOfPhotos : photoSetToDisplay.current;
@@ -297,7 +353,6 @@ selectionWindow.displayImageSet = function(imageSet) {
   selectionWindow.appendChild(imageSet.creatingImageNodes());
 };
 selectionWindow.displayNewSetOfImages = function(){
-  console.log(currentClicks);
   selectionWindow.textContent = '';
   photoSetToDisplay = photoSetToDisplay.createNewRandomSet();
   this.displayImageSet(photoSetToDisplay);
@@ -320,20 +375,21 @@ function myClickHandler (event) {
   if (event.target.parentNode.className === 'imageSet') {
     var element = RatingStorage.getElementWithName(event.target.getAttribute('id'));
     element.likes += 1;
+    currentIterationData[element.fileName].likes += 1;
     currentClicks += 1;
     selectionWindow.displayNewSetOfImages();
     infoText.updateTextCounter();
     RatingStorage.saveState();
-    console.log(currentClicks);
 
     if (currentClicks >= maxclicksallowed) {
-      console.log('Game is done. Thanks for playing');
-      creatingChartElementAtParent(selectionWindow);
-      console.table(photos);
+      creatingChartElementAtParent(selectionWindow, currentIterationData, 'Current Iteration Chart');
+      creatingChartElementAtParent(selectionWindow, photos, 'All Iterations Chart');
+      creatingListElementAtParent(selectionWindow);
+      console.table(currentIterationData);
+      console.table(photos, ['fileName', 'views', 'likes']);
       selectionWindow.removeEventListener('click', myClickHandler);
       currentClicks = 0;
       RatingStorage.saveState();
-      console.table(RatingStorage.getPhotosArray());
     }
   }
 };
