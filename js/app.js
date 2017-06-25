@@ -224,6 +224,35 @@ RatingStorage.containsPhoto = function(photo) {
   return contains(photos, photo);
 };
 
+function creatingListElementAtParent(parent) {
+  var sameRatioOccurences = 0;
+  var ul = document.createElement('ul');
+  for (var each in photos) {
+    var element = photos[each];
+    var allRatio = Math.round((element.likes / element.views) * 100);
+    var currentElement = currentIterationData[element.fileName] ;
+    var thisRatio = Math.round((currentElement.likes / currentElement.views) * 100) ;
+    var li = document.createElement('li');
+
+    if (thisRatio === allRatio ) {
+      sameRatioOccurences += 1;
+      li.textContent = element.titleName() + ' has the same ' + thisRatio + '% than previous runs.';
+    } else {
+      li.textContent = element.titleName() + ' has a ' + thisRatio + '% for this run. Previous runs: ' + allRatio + '%';
+    }
+    ul.appendChild(li);
+  } // end of for loop
+  var ulTitle = document.createElement('h3');
+
+  if (photos.length === sameRatioOccurences) {
+    ulTitle.textContent = 'First run? Run again for more percentage stats';
+  } else {
+    ulTitle.textContent = 'Ratios of click vs views';
+  }
+  parent.appendChild(ulTitle);
+  parent.appendChild(ul);
+}
+
 function creatingChartElementAtParent(parent, photosData, chartTitle) {
   var canvasNode = document.createElement('canvas');
   canvasNode.setAttribute('id', 'chart');
@@ -343,6 +372,7 @@ function myClickHandler (event) {
     if (currentClicks >= maxclicksallowed) {
       creatingChartElementAtParent(selectionWindow, currentIterationData, 'Current Iteration Chart');
       creatingChartElementAtParent(selectionWindow, photos, 'All Iterations Chart');
+      creatingListElementAtParent(selectionWindow);
       console.table(currentIterationData);
       console.table(photos, ['fileName', 'views', 'likes']);
       selectionWindow.removeEventListener('click', myClickHandler);
