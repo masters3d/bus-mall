@@ -388,6 +388,7 @@ function myClickHandler (event) {
       console.table(currentIterationData);
       console.table(photos, ['fileName', 'views', 'likes']);
       selectionWindow.removeEventListener('click', myClickHandler);
+      currentIterationData = RatingStorage.createBlankNestedObject();
       currentClicks = 0;
       RatingStorage.saveState();
     }
